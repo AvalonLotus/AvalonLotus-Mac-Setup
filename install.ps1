@@ -168,19 +168,18 @@ if (Test-Path $trustSrc) {
     Warn "trust\allowed_signers missing — login-sync will block bootstrap until it exists"
 }
 
-# ─── Login auto-sync (Scheduled Task) ─────────────────────────────────
-# Registers AvalonLotus-LoginSync: at logon, pulls this repo and, only if it
-# changed, re-runs install.ps1. Windows analog of the macOS login-sync
-# LaunchAgent. Idempotent — -Force overwrites the task if it already exists.
-Log "Registering login auto-sync Scheduled Task"
-try {
-    $syncScript = Join-Path $PSScriptRoot 'login-sync.ps1'
-    $action  = New-ScheduledTaskAction -Execute 'powershell.exe' `
-                 -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$syncScript`""
-    $trigger = New-ScheduledTaskTrigger -AtLogOn
-    Register-ScheduledTask -TaskName 'AvalonLotus-LoginSync' -Action $action -Trigger $trigger -Force | Out-Null
-    Ok "login-sync Scheduled Task registered (runs at logon)"
-} catch { Warn "login-sync task registration failed (run PowerShell as admin if needed): $_" }
+# ─── Login auto-sync ──────────────────────────────────────────────────
+# macOS uses a login-sync LaunchAgent to pull this repo at logon. On Windows we
+# deliberately do NOT register a scheduled task: on some PCs the Task Scheduler
+# will not launch script processes (Windows Defender / Controlled Folder Access
+# blocks scheduler-spawned powershell — the process never starts, last result
+# 0x1 / 0xFFFD0000). Instead, auto-pull of ALL AvalonLotus repos (this one
+# included) is handled by the Startup-folder background loop that
+# Global-Finance-News' scripts\install-git-autosync.ps1 installs (see below /
+# the GFN repo Setup step). So there is nothing to register here.
+Log "Login auto-sync is handled by the Startup-folder loop (Global-Finance-News autosync) — no scheduled task"
+# Clean up any AvalonLotus-LoginSync task left behind by an older version.
+schtasks /Delete /TN 'AvalonLotus-LoginSync' /F 2>$null | Out-Null
 
 # ─── Repo manifest ────────────────────────────────────────────────────
 # Format per row: @{ Url=...; Path=...; Setup=... }
