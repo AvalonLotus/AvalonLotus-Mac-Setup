@@ -83,7 +83,9 @@ run_with_timeout() {
 # (download video/subs, scene-cut frame extraction, OCR of on-screen text).
 # tesseract-lang is ~685MB but carries chi_tra (Traditional Chinese) required for
 # CJK on-screen text. Added 2026-06.
-FORMULAE="gh mas node python yt-dlp ffmpeg tesseract tesseract-lang"
+# pandoc + poppler: document pipeline (markdown<->docx<->pdf conversion, PDF
+# text/info extraction) for the book/PDF build workflow. Added 2026-06-30.
+FORMULAE="gh mas node python yt-dlp ffmpeg tesseract tesseract-lang pandoc poppler"
 for tool in $FORMULAE; do
   if brew list "$tool" >/dev/null 2>&1; then
     dim "  ✓ $tool (formula) already installed"
@@ -97,7 +99,8 @@ done
 # GFN essentials:  docker
 # Daily drivers:   google-chrome, visual-studio-code, obsidian, claude
 # Specialised:     obs, utm, codex
-CASKS="docker google-chrome visual-studio-code obsidian claude obs utm codex"
+# Docs/publishing: libreoffice, font-sarasa-gothic (CJK font for book/PDF). Added 2026-06-30.
+CASKS="docker google-chrome visual-studio-code obsidian claude obs utm codex font-sarasa-gothic libreoffice"
 for cask in $CASKS; do
   if brew list --cask "$cask" >/dev/null 2>&1; then
     dim "  ✓ $cask (cask) already installed"
