@@ -232,6 +232,17 @@ echo "$REPOS" | while IFS='|' read -r url path setup; do
   [ -z "$url" ] && continue
   [ -d "$path/.git" ] && echo "  • $(basename "$path")  → $path"
 done
+
+# ─── Security setup reminder (per-machine, run manually) ──────────────
+# NOT auto-run: it is interactive and role-specific (main vs secondary),
+# and must never auto-grant admin scopes to every machine.
+if [ ! -f "$HOME/.ssh/id_ed25519_github_auth" ]; then
+  echo
+  warn "這台尚未做安全設定（每台一次,分主機/副機）"
+  echo "    手動執行一次:  bash \"\$HOME/AvalonLotus Mac-Setup/setup-security.command\""
+  echo "    說明文件:      \$HOME/AvalonLotus Mac-Setup/security-setup-guide.md"
+fi
+
 echo
 echo "If you re-run this script, it will pull the latest of each repo and"
 echo "re-run their setup. All setup scripts are designed to be idempotent."
