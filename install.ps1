@@ -186,12 +186,13 @@ schtasks /Delete /TN 'AvalonLotus-LoginSync' /F 2>$null | Out-Null
 # Setup is a scriptblock run from the repo root. $null = no setup.
 # $ROOT = container folder for all repos on Windows — the company document folder,
 #         so repos sit alongside the existing "AvalonLotus - X - Y" document folders.
-# NOTE: Windows uses its own localized folder names ("AvalonLotus - <EN> - <中文>").
-#       This is independent of the Mac layout in install.sh — neither affects the other.
+# NOTE: Windows top-level folders use "AvalonLotus - <EN>" (Chinese suffixes dropped
+#       2026-06-26); project subfolders under "AvalonLotus - Projects" keep their
+#       "<EN> - <中文>" suffix. Independent of the Mac layout in install.sh.
 $ROOT = 'D:\AvalonLotus International Pty., Ltd'
 $Repos = @(
-    @{ Url = 'https://github.com/AvalonLotus/AvalonLotus.com.git';      Path = "$ROOT\AvalonLotus - Website - 官方網站";                Setup = $null }
-    @{ Url = 'https://github.com/AvalonLotus/Global-Finance-News.git';  Path = "$ROOT\AvalonLotus - Projects - 專案\AvalonLotus - Global Finance News - 全球財經新聞"; Setup = {
+    @{ Url = 'https://github.com/AvalonLotus/AvalonLotus.com.git';      Path = "$ROOT\AvalonLotus - Website";                Setup = $null }
+    @{ Url = 'https://github.com/AvalonLotus/Global-Finance-News.git';  Path = "$ROOT\AvalonLotus - Projects\AvalonLotus - Global Finance News - 全球財經新聞"; Setup = {
             # Mac used a launchd daemon (install-git-autosync.sh). On Windows the
             # equivalent is a Scheduled Task. If the repo ships a .ps1, prefer it.
             if (Test-Path 'scripts\install-git-autosync.ps1') {
@@ -201,11 +202,11 @@ $Repos = @(
                 Warn "Mac uses launchd; on Windows set up a Scheduled Task to 'git pull' on an interval."
             }
       } }
-    @{ Url = 'https://github.com/AvalonLotus/AvalonLotus-Obsidian.git'; Path = "$ROOT\AvalonLotus - Obsidian - 知識庫"; Setup = {
+    @{ Url = 'https://github.com/AvalonLotus/AvalonLotus-Obsidian.git'; Path = "$ROOT\AvalonLotus - Obsidian"; Setup = {
             if (Test-Path 'setup.ps1') { powershell -ExecutionPolicy Bypass -File 'setup.ps1' }
             else { Warn "no setup.ps1 (Mac used setup.sh for fonts + Python markdown pkgs)." }
       } }
-    @{ Url = 'https://github.com/AvalonLotus/AvalonLotus-Skills.git';   Path = "$ROOT\AvalonLotus - Skills - 技能庫";  Setup = {
+    @{ Url = 'https://github.com/AvalonLotus/AvalonLotus-Skills.git';   Path = "$ROOT\AvalonLotus - Skills";  Setup = {
             # Mac runs the repo's install.sh to symlink each skill into
             # ~/.claude/skills. The repo currently ships only a bash installer;
             # if a Windows port (install.ps1) is added, prefer it. Until then,
