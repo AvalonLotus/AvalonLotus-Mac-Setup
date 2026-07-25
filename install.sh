@@ -98,9 +98,9 @@ done
 # GUI apps via cask
 # GFN essentials:  docker
 # Daily drivers:   google-chrome, visual-studio-code, obsidian, claude
-# Specialised:     obs, utm, codex
+# Specialised:     obs
 # Docs/publishing: libreoffice, font-sarasa-gothic (CJK font for book/PDF). Added 2026-06-30.
-CASKS="docker google-chrome visual-studio-code obsidian claude obs utm codex font-sarasa-gothic libreoffice"
+CASKS="docker google-chrome visual-studio-code obsidian claude obs font-sarasa-gothic libreoffice"
 for cask in $CASKS; do
   if brew list --cask "$cask" >/dev/null 2>&1; then
     dim "  ✓ $cask (cask) already installed"

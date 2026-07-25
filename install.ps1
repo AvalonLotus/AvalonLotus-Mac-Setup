@@ -147,8 +147,6 @@ $Apps = @(
 foreach ($app in $Apps) {
     Install-WingetPkg -Id $app.Id -Label $app.Label
 }
-Warn "utm (Mac virtualization) — no Windows port; use Hyper-V or WSL2 instead (skipped)"
-Warn "codex — no confirmed winget package; install manually if needed (skipped)"
 
 Ok "baseline tools done"
 
