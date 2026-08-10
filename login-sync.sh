@@ -3,9 +3,10 @@
 #
 # What it does:
 #   1. Pulls the latest AvalonLotus Mac-Setup (the bootstrap definition).
-#   2. ONLY if this repo actually changed, re-runs install.sh so any new brew
-#      tools, skill links, or repo setup steps are applied automatically.
-#   3. If nothing changed, it does nothing expensive — just a quick pull.
+#   2. Compares HEAD against the commit recorded in the applied-stamp; if they
+#      differ, re-runs install.sh so any new brew tools, skill links, or repo
+#      setup steps are applied automatically, then records the new commit.
+#   3. If the stamp already matches HEAD, it does nothing expensive.
 #
 # Installed / refreshed by install.sh. Idempotent and safe to run repeatedly.
 # Log: ~/.local/state/git-autosync/login-sync.log
@@ -13,6 +14,12 @@
 # NOTE: git content for the OTHER repos is already kept current by the separate
 # com.avalonlotus.git-autopull agent (every 15 min + at login). This script's
 # job is only to re-APPLY the bootstrap when the bootstrap itself changes.
+#
+# Why a stamp and not before/after-pull comparison (fixed 2026-08-10): git-autopull
+# scans $HOME and pulls Mac-Setup too, so by login time HEAD had almost always
+# already moved and this script saw before == after — "nothing to apply" 1272 times,
+# install.sh never once re-applied since 2026-06-03. The stamp records what was
+# actually applied on THIS machine, so it no longer matters who did the pull.
 
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 REPO="$HOME/AvalonLotus Mac-Setup"
@@ -29,18 +36,24 @@ if ! git diff --quiet 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; th
   echo "[$(ts)] login-sync: repo dirty, skip" >> "$LOG"; exit 0
 fi
 
-before=$(git rev-parse HEAD 2>/dev/null)
-git pull --rebase --autostash >> "$LOG" 2>&1
-after=$(git rev-parse HEAD 2>/dev/null)
+STAMP="$LOG_DIR/login-sync.applied"
 
-if [ "$before" = "$after" ]; then
-  echo "[$(ts)] login-sync: up to date ($after), nothing to apply" >> "$LOG"
+git pull --rebase --autostash >> "$LOG" 2>&1
+head=$(git rev-parse HEAD 2>/dev/null)
+applied=$(cat "$STAMP" 2>/dev/null)
+
+if [ -n "$head" ] && [ "$head" = "$applied" ]; then
+  echo "[$(ts)] login-sync: already applied ($head), nothing to do" >> "$LOG"
   exit 0
 fi
 
 # The dual-admin signature gate (model B, 2026-06-03) and the phone-approval
 # system built on top of it (2026-07-26) were REMOVED 2026-08-10 by user decision.
-# Bootstrap applies as soon as HEAD moves — the original pre-2026-06-03 behavior.
-echo "[$(ts)] login-sync: updated $before -> $after, running install.sh" >> "$LOG"
-bash "$REPO/install.sh" >> "$LOG" 2>&1
-echo "[$(ts)] login-sync: install.sh finished" >> "$LOG"
+# Bootstrap applies as soon as HEAD differs from the stamp, whoever committed it.
+echo "[$(ts)] login-sync: applied=${applied:-none} head=$head, running install.sh" >> "$LOG"
+if bash "$REPO/install.sh" >> "$LOG" 2>&1; then
+  printf '%s\n' "$head" > "$STAMP"
+  echo "[$(ts)] login-sync: install.sh finished, stamped $head" >> "$LOG"
+else
+  echo "[$(ts)] login-sync: install.sh FAILED, stamp not advanced — will retry next login" >> "$LOG"
+fi
