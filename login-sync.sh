@@ -51,6 +51,9 @@ fi
 # system built on top of it (2026-07-26) were REMOVED 2026-08-10 by user decision.
 # Bootstrap applies as soon as HEAD differs from the stamp, whoever committed it.
 echo "[$(ts)] login-sync: applied=${applied:-none} head=$head, running install.sh" >> "$LOG"
+# Tells install.sh not to bootout the launchd job we are running inside — doing so
+# kills this process tree mid-script and leaves the agent uninstalled.
+export AVALONLOTUS_FROM_LOGIN_SYNC=1
 if bash "$REPO/install.sh" >> "$LOG" 2>&1; then
   printf '%s\n' "$head" > "$STAMP"
   echo "[$(ts)] login-sync: install.sh finished, stamped $head" >> "$LOG"

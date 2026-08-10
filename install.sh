@@ -161,12 +161,26 @@ cat > "$LOGIN_PLIST" <<PLIST
 </dict></plist>
 PLIST
 _uid=$(id -u)
-launchctl bootout "gui/$_uid" "$LOGIN_PLIST" 2>/dev/null || true
-if launchctl bootstrap "gui/$_uid" "$LOGIN_PLIST" 2>/dev/null; then
-  ok "login-sync agent loaded (runs at login + every 1h)"
+_loaded=$(launchctl print "gui/$_uid/com.avalonlotus.login-sync" >/dev/null 2>&1 && echo yes || echo no)
+
+# Never bootout the job we are RUNNING UNDER. login-sync.sh invokes this script
+# from inside the com.avalonlotus.login-sync launchd job, and booting that job
+# out kills its whole process tree — install.sh dies before the bootstrap line
+# and the agent stays uninstalled, permanently. That is exactly what happened
+# 2026-08-11 02:33 the first time login-sync ever managed to apply the bootstrap.
+if [ "$_loaded" = yes ] && [ "${AVALONLOTUS_FROM_LOGIN_SYNC:-}" = 1 ]; then
+  ok "login-sync agent already loaded (plist refreshed; reload skipped — we are running inside it)"
+elif [ "$_loaded" = yes ] && cmp -s "$LOGIN_PLIST" "$LOGIN_PLIST.installed" 2>/dev/null; then
+  ok "login-sync agent already loaded and unchanged (no reload needed)"
 else
-  warn "login-sync bootstrap failed (will load at next login)"
+  launchctl bootout "gui/$_uid" "$LOGIN_PLIST" 2>/dev/null || true
+  if launchctl bootstrap "gui/$_uid" "$LOGIN_PLIST" 2>/dev/null; then
+    ok "login-sync agent loaded (runs at login + every 15 min)"
+  else
+    warn "login-sync bootstrap failed (will load at next login)"
+  fi
 fi
+cp "$LOGIN_PLIST" "$LOGIN_PLIST.installed" 2>/dev/null || true
 
 # ─── Repo manifest ────────────────────────────────────────────────────
 # Add new repos here. Format per row: <repo_url>|<local_path>|<setup_cmd>
