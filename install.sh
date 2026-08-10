@@ -77,15 +77,17 @@ run_with_timeout() {
 }
 
 # CLI formulae — small, fast, mostly invisible
-# node + python: developer runtimes GFN's preflight expects. Added 2026-06 for
-# parity with install.ps1 — a clean machine needs them; brew skips if present.
+# node + python: developer runtimes GFN's preflight expects. Added 2026-06 —
+# a clean machine needs them; brew skips if already present.
 # yt-dlp + ffmpeg + tesseract (+tesseract-lang): YouTube frame-analysis pipeline
 # (download video/subs, scene-cut frame extraction, OCR of on-screen text).
 # tesseract-lang is ~685MB but carries chi_tra (Traditional Chinese) required for
 # CJK on-screen text. Added 2026-06.
 # pandoc + poppler: document pipeline (markdown<->docx<->pdf conversion, PDF
 # text/info extraction) for the book/PDF build workflow. Added 2026-06-30.
-FORMULAE="gh mas node python yt-dlp ffmpeg tesseract tesseract-lang pandoc poppler"
+# mas dropped 2026-08-10 with utm + codex + visual-studio-code — trimming the
+# baseline to what a new Mac actually needs. Nothing is ever uninstalled here.
+FORMULAE="gh node python yt-dlp ffmpeg tesseract tesseract-lang pandoc poppler"
 for tool in $FORMULAE; do
   if brew list "$tool" >/dev/null 2>&1; then
     dim "  ✓ $tool (formula) already installed"
@@ -97,10 +99,11 @@ done
 
 # GUI apps via cask
 # GFN essentials:  docker
-# Daily drivers:   google-chrome, visual-studio-code, obsidian, claude
+# Daily drivers:   google-chrome, obsidian, claude
 # Specialised:     obs
 # Docs/publishing: libreoffice, font-sarasa-gothic (CJK font for book/PDF). Added 2026-06-30.
-CASKS="docker google-chrome visual-studio-code obsidian claude obs font-sarasa-gothic libreoffice"
+# utm, codex, visual-studio-code dropped 2026-08-10 — trimmed out of the baseline.
+CASKS="docker google-chrome obsidian claude obs font-sarasa-gothic libreoffice"
 for cask in $CASKS; do
   if brew list --cask "$cask" >/dev/null 2>&1; then
     dim "  ✓ $cask (cask) already installed"
@@ -118,23 +121,11 @@ done
 
 ok "baseline tools done"
 
-# ─── Commit-signature trust (model B) ─────────────────────────────────
-# Installs the trusted-signers list so THIS machine can VERIFY that bootstrap
-# commits were signed by the admin key before login-sync runs install.sh.
-# Verification only — signing is set up solely on the admin machine. Refreshing
-# allowed_signers here is safe: login-sync only re-runs install.sh for commits
-# already trusted by the EXISTING local list, so key rotation must itself be a
-# signed (trusted) commit.
-log "Installing commit-signature trust (allowed_signers)"
-mkdir -p "$HOME/.config/git-autosync"
-if [ -f "$HOME/AvalonLotus Mac-Setup/trust/allowed_signers" ]; then
-  cp "$HOME/AvalonLotus Mac-Setup/trust/allowed_signers" "$HOME/.config/git-autosync/allowed_signers"
-  git config --global gpg.format ssh
-  git config --global gpg.ssh.allowedSignersFile "$HOME/.config/git-autosync/allowed_signers"
-  ok "allowed_signers installed; login-sync will verify bootstrap commits"
-else
-  warn "trust/allowed_signers missing — login-sync will block bootstrap until it exists"
-fi
+# Commit-signature trust (model B) removed 2026-08-10 by user decision, together
+# with trust/allowed_signers, the phone-approval tooling that rode on it
+# (approve.command, add-signer.command, phone-approve-guide.md, APPROVALS.log) and
+# the per-machine kill-switch setup (setup-security.command, security-setup-guide.md).
+# login-sync now applies the bootstrap on any HEAD move, whoever committed it.
 
 # ─── Login auto-sync agent ────────────────────────────────────────────
 # Installs com.avalonlotus.login-sync: at login AND every 15 min it pulls THIS
@@ -235,16 +226,6 @@ echo "$REPOS" | while IFS='|' read -r url path setup; do
   [ -z "$url" ] && continue
   [ -d "$path/.git" ] && echo "  • $(basename "$path")  → $path"
 done
-
-# ─── Security setup reminder (per-machine, run manually) ──────────────
-# NOT auto-run: it is interactive and role-specific (main vs secondary),
-# and must never auto-grant admin scopes to every machine.
-if [ ! -f "$HOME/.ssh/id_ed25519_github_auth" ]; then
-  echo
-  warn "這台尚未做安全設定（每台一次,分主機/副機）"
-  echo "    手動執行一次:  bash \"\$HOME/AvalonLotus Mac-Setup/setup-security.command\""
-  echo "    說明文件:      \$HOME/AvalonLotus Mac-Setup/security-setup-guide.md"
-fi
 
 echo
 echo "If you re-run this script, it will pull the latest of each repo and"

@@ -38,21 +38,9 @@ if [ "$before" = "$after" ]; then
   exit 0
 fi
 
-echo "[$(ts)] login-sync: updated $before -> $after, verifying signatures" >> "$LOG"
-
-# Trust gate (model B): run install.sh ONLY if HEAD is signed by a trusted key
-# in allowed_signers. install.sh executes the HEAD tree, and HEAD can only carry
-# a good (%G?=G) signature if the trusted admin made that exact commit — an
-# attacker can't forge it. Checking HEAD (not the whole range) avoids
-# false-blocks from older unsigned history. Fail safe: any non-G status blocks.
-sig=$(git log -1 --format='%G?' "$after" 2>/dev/null)
-if [ "$sig" != "G" ]; then
-  echo "[$(ts)] login-sync: HEAD $after has UNTRUSTED signature status '${sig:-?}' — NOT running install.sh." >> "$LOG"
-  echo "[$(ts)] login-sync: content pulled, bootstrap NOT applied. Investigate before trusting." >> "$LOG"
-  command -v osascript >/dev/null 2>&1 && osascript -e 'display notification "Untrusted Mac-Setup HEAD — bootstrap blocked" with title "AvalonLotus login-sync"' 2>/dev/null
-  exit 0
-fi
-
-echo "[$(ts)] login-sync: HEAD signature trusted, running install.sh" >> "$LOG"
+# The dual-admin signature gate (model B, 2026-06-03) and the phone-approval
+# system built on top of it (2026-07-26) were REMOVED 2026-08-10 by user decision.
+# Bootstrap applies as soon as HEAD moves — the original pre-2026-06-03 behavior.
+echo "[$(ts)] login-sync: updated $before -> $after, running install.sh" >> "$LOG"
 bash "$REPO/install.sh" >> "$LOG" 2>&1
 echo "[$(ts)] login-sync: install.sh finished" >> "$LOG"
