@@ -87,7 +87,12 @@ run_with_timeout() {
 # text/info extraction) for the book/PDF build workflow. Added 2026-06-30.
 # mas dropped 2026-08-10 with utm + codex + visual-studio-code — trimming the
 # baseline to what a new Mac actually needs. Nothing is ever uninstalled here.
-FORMULAE="gh node python yt-dlp ffmpeg tesseract tesseract-lang pandoc poppler"
+# whisper-cpp + opencc: local speech-to-text (meeting/webinar recordings ->
+# transcript). Added 2026-08-16 — audio never leaves the machine. The whisper-cpp
+# formula is 9MB and ships no model; the GGML weights are fetched separately
+# below. opencc normalises whisper's zh output to Traditional Chinese, which the
+# model drifts out of partway through a long recording.
+FORMULAE="gh node python yt-dlp ffmpeg tesseract tesseract-lang pandoc poppler whisper-cpp opencc"
 for tool in $FORMULAE; do
   if brew list "$tool" >/dev/null 2>&1; then
     dim "  ✓ $tool (formula) already installed"
@@ -99,11 +104,16 @@ done
 
 # GUI apps via cask
 # GFN essentials:  docker
-# Daily drivers:   google-chrome, obsidian, claude
+# Daily drivers:   google-chrome, obsidian, claude, claude-code
 # Specialised:     obs
 # Docs/publishing: libreoffice, font-sarasa-gothic (CJK font for book/PDF). Added 2026-06-30.
 # utm, codex, visual-studio-code dropped 2026-08-10 — trimmed out of the baseline.
-CASKS="docker google-chrome obsidian claude obs font-sarasa-gothic libreoffice"
+# claude-code added 2026-08-12: the `claude` cask is the DESKTOP app; the CLI is a
+# separate cask. Until now no installer ever installed the CLI — a fresh Mac got
+# Claude.app but no `claude` command, so Skills' hooks and the memory links had
+# nothing to attach to. Ordering is safe either way: Skills/install.sh writes
+# ~/.claude/settings.json whether or not the CLI exists yet.
+CASKS="docker google-chrome obsidian claude claude-code obs font-sarasa-gothic libreoffice"
 for cask in $CASKS; do
   if brew list --cask "$cask" >/dev/null 2>&1; then
     dim "  ✓ $cask (cask) already installed"
@@ -113,11 +123,59 @@ for cask in $CASKS; do
     dim "  ✓ obsidian.app exists (non-brew install — skipping)"
   elif [ "$cask" = "claude" ] && [ -d "/Applications/Claude.app" ]; then
     dim "  ✓ claude.app exists (non-brew install — skipping)"
+  elif [ "$cask" = "claude-code" ] && command -v claude >/dev/null 2>&1; then
+    dim "  ✓ claude CLI on PATH (native/npm install — skipping)"
   else
     log "  brew install --cask $cask"
     run_with_timeout "$cask" brew install --cask "$cask" || warn "    $cask install failed (continue)"
   fi
 done
+
+# ─── Whisper model weights ────────────────────────────────────────────
+# brew ships whisper-cpp with no model, so a fresh Mac has the binary and
+# nothing to run. large-v3 is the only model worth carrying here: on Traditional
+# Chinese the smaller ones drop proper nouns, which is exactly what these
+# recordings are full of. 2.9GB, downloaded once, resumable.
+# Size-checked rather than existence-checked — a half-finished download leaves a
+# file that looks present and then fails inside whisper-cli with a parse error.
+WHISPER_MODEL_DIR="$HOME/.cache/whisper-models"
+WHISPER_MODEL="$WHISPER_MODEL_DIR/ggml-large-v3.bin"
+WHISPER_MODEL_BYTES=3095033483
+WHISPER_MODEL_URL="https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin"
+
+log "Checking whisper large-v3 model"
+mkdir -p "$WHISPER_MODEL_DIR"
+if [ "$(stat -f %z "$WHISPER_MODEL" 2>/dev/null || echo 0)" = "$WHISPER_MODEL_BYTES" ]; then
+  dim "  ✓ ggml-large-v3.bin already present (2.9GB)"
+else
+  log "  downloading ggml-large-v3.bin (2.9GB, resumable)"
+  curl -fL -C - --retry 3 -o "$WHISPER_MODEL" "$WHISPER_MODEL_URL" \
+    || warn "    model download failed (continue — re-run install.sh to resume)"
+  if [ "$(stat -f %z "$WHISPER_MODEL" 2>/dev/null || echo 0)" != "$WHISPER_MODEL_BYTES" ]; then
+    warn "    model incomplete — transcribe.sh will refuse until install.sh finishes it"
+  fi
+fi
+
+# Put transcribe.sh on PATH. Symlinked rather than copied so a `git pull` of this
+# repo updates the command in place, the same way login-sync picks up changes.
+# Resolve this repo's checkout. Under `curl | bash` there is no script path on
+# disk, so fall back to the canonical clone location install.sh documents.
+SELF="${BASH_SOURCE[0]:-}"
+if [ -f "$SELF" ]; then
+  TRANSCRIBE_SRC="$(cd "$(dirname "$SELF")" && pwd)/transcribe.sh"
+else
+  TRANSCRIBE_SRC="$HOME/AvalonLotus Mac-Setup/transcribe.sh"
+fi
+TRANSCRIBE_DST="$(brew --prefix)/bin/transcribe"
+if [ -f "$TRANSCRIBE_SRC" ]; then
+  chmod +x "$TRANSCRIBE_SRC"
+  if [ "$(readlink "$TRANSCRIBE_DST" 2>/dev/null)" = "$TRANSCRIBE_SRC" ]; then
+    dim "  ✓ transcribe already linked"
+  else
+    ln -sfn "$TRANSCRIBE_SRC" "$TRANSCRIBE_DST" && ok "transcribe -> $TRANSCRIBE_SRC" \
+      || warn "    could not link transcribe (continue)"
+  fi
+fi
 
 ok "baseline tools done"
 
