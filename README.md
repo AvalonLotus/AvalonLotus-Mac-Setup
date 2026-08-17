@@ -26,7 +26,9 @@ Takes ~5-10 minutes on a fresh Mac (most time is Homebrew install).
 | 1 | [AvalonLotus.com](https://github.com/AvalonLotus/AvalonLotus.com) | `~/AvalonLotus.com` | (just clone, no setup) |
 | 2 | [Global-Finance-News](https://github.com/AvalonLotus/Global-Finance-News) | `~/AvalonLotus Projects/Global Finance News` | `scripts/install-git-autosync.sh` — post-commit auto-push + 15-min auto-pull launchd daemon |
 | 3 | [AvalonLotus-Obsidian](https://github.com/AvalonLotus/AvalonLotus-Obsidian) | `~/AvalonLotus Obsidian` | `./setup.sh` — fonts + Python markdown packages |
-| 4 | [AvalonLotus-Skills](https://github.com/AvalonLotus/AvalonLotus-Skills) | `~/AvalonLotus Skills` | `./install.sh` — symlinks each skill into `~/.claude/skills/` |
+| 4 | [Vansaintstone-Obsidian](https://github.com/AvalonLotus/Vansaintstone-Obsidian) | `~/Vansaintstone Obsidian` | `./setup.sh` — same |
+| 5 | [Lossvia-Obsidian](https://github.com/AvalonLotus/Lossvia-Obsidian) | `~/Lossvia Obsidian` | `./setup.sh` — same |
+| 6 | [Generative-Skill](https://github.com/AvalonLotus/Generative-Skill) | `~/Generative Skill` | `./install.sh` — symlinks each skill into `~/.claude/skills/`, merges hooks, links memory |
 
 Prereqs (auto-installed if missing): Homebrew, git, jq.
 

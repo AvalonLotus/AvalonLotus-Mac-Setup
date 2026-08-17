@@ -247,7 +247,9 @@ REPOS="
 https://github.com/AvalonLotus/AvalonLotus.com.git|$HOME/AvalonLotus.com|
 https://github.com/AvalonLotus/Global-Finance-News.git|$HOME/AvalonLotus Projects/Global Finance News|bash scripts/install-git-autosync.sh
 https://github.com/AvalonLotus/AvalonLotus-Obsidian.git|$HOME/AvalonLotus Obsidian|./setup.sh
-https://github.com/AvalonLotus/AvalonLotus-Skills.git|$HOME/AvalonLotus Skills|./install.sh
+https://github.com/AvalonLotus/Vansaintstone-Obsidian.git|$HOME/Vansaintstone Obsidian|./setup.sh
+https://github.com/AvalonLotus/Lossvia-Obsidian.git|$HOME/Lossvia Obsidian|./setup.sh
+https://github.com/AvalonLotus/Generative-Skill.git|$HOME/Generative Skill|./install.sh
 "
 
 # ─── Process each repo ────────────────────────────────────────────────
