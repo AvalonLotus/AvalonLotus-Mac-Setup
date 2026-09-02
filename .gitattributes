@@ -1,14 +1,9 @@
-# Keep line endings consistent on every device so shell/python scripts never
-# break in Docker/Linux from a Windows CRLF checkout (Git for Windows defaults
-# to core.autocrlf=true). Store LF in the repo; force LF for files executed
-# in Linux, and CRLF for Windows-native scripts.
+# Keep line endings consistent so shell/python scripts never break in
+# Docker/Linux from a CRLF checkout. Store LF in the repo; force LF for files
+# executed as scripts.
 * text=auto
 
 *.sh      text eol=lf
 *.bash    text eol=lf
 *.py      text eol=lf
 *.command text eol=lf
-
-*.ps1     text eol=crlf
-*.bat     text eol=crlf
-*.cmd     text eol=crlf

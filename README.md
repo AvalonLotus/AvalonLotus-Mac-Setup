@@ -2,8 +2,6 @@
 
 One-command bootstrap for a new Mac. Clones every AvalonLotus repo and runs each one's setup script.
 
-**macOS only.** The Windows port (`install.ps1` / `login-sync.ps1`) was removed 2026-08-10; a Windows machine keeps auto-pull through Global-Finance-News' `scripts\install-git-autosync.ps1` Startup loop, but has no one-command bootstrap here.
-
 **No approval step.** The signed-commit trust gate, the phone-approval system, and the per-machine kill-switch setup were all removed 2026-08-10. `login-sync` applies the bootstrap on any HEAD move, whoever committed it — a malicious `install.sh` pushed from any machine now runs everywhere.
 
 ## Quick start (new Mac)
